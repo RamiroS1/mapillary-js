@@ -23,10 +23,10 @@ const serveDist = (req, res, next) => {
   const subPath = (req.path.slice("/dist".length) || "/").replace(/^\//, "") || ".";
   const bases = process.env.VERCEL
     ? [
+        path.join(__dirname, "api", "dist"),
         path.join(process.cwd(), "dist"),
         path.join(process.cwd(), "public", "dist"),
         path.join(__dirname, "dist"),
-        path.join(__dirname, "..", "dist"),
       ]
     : [pathname("dist")];
   const tryServe = (i) => {
@@ -106,10 +106,10 @@ app.use(logger);
 if (process.env.VERCEL) {
   app.get("/api/debug-paths", (req, res) => {
     const bases = [
+      path.join(__dirname, "api", "dist"),
       path.join(process.cwd(), "dist"),
       path.join(process.cwd(), "public", "dist"),
       path.join(__dirname, "dist"),
-      path.join(__dirname, "..", "dist"),
     ];
     const info = {
       cwd: process.cwd(),

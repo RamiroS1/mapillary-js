@@ -1,7 +1,7 @@
 {
   "version": 2,
   "installCommand": "npm install --legacy-peer-deps --ignore-scripts",
-  "buildCommand": "npm run build && mkdir -p public && cp -r dist public/",
+  "buildCommand": "npm run build && mkdir -p public && cp -r dist public/ && mkdir -p api/dist && cp -r dist/* api/dist/",
   "builds": [
     {
       "src": "api/index.js",

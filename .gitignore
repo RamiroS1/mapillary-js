@@ -19,6 +19,7 @@ yarn-debug.log*
 # Artifacts
 /build
 /dist
+/api/dist
 
 # Imágenes (muy pesadas para GitHub; usar DATA_BASE_URL en Vercel u otro host)
 /data
