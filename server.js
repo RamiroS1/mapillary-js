@@ -21,16 +21,30 @@ const MIME = {
 const serveDist = (req, res, next) => {
   if (!req.path.startsWith("/dist/") && req.path !== "/dist") return next();
   const subPath = (req.path.slice("/dist".length) || "/").replace(/^\//, "") || ".";
-  const filePath = path.join(pathname("dist"), subPath);
-  fs.stat(filePath, (err, stat) => {
-    if (err || !stat.isFile()) {
+  const bases = process.env.VERCEL
+    ? [
+        path.join(process.cwd(), "dist"),
+        path.join(__dirname, "dist"),
+        path.join(__dirname, "..", "dist"),
+      ]
+    : [pathname("dist")];
+  const tryServe = (i) => {
+    if (i >= bases.length) {
       res.status(404).type("text/plain").send("Not Found");
       return;
     }
-    const ext = path.extname(filePath);
-    if (MIME[ext]) res.setHeader("Content-Type", MIME[ext]);
-    fs.createReadStream(filePath).pipe(res);
-  });
+    const filePath = path.join(bases[i], subPath);
+    fs.stat(filePath, (err, stat) => {
+      if (!err && stat.isFile()) {
+        const ext = path.extname(filePath);
+        if (MIME[ext]) res.setHeader("Content-Type", MIME[ext]);
+        fs.createReadStream(filePath).pipe(res);
+        return;
+      }
+      tryServe(i + 1);
+    });
+  };
+  tryServe(0);
 };
 
 const logger = (req, res, next) => {

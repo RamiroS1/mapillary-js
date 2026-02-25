@@ -7,12 +7,18 @@
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["examples/custom-data/**", "dist/**", "node_modules/three/**"]
+        "includeFiles": [
+          "examples/custom-data/**",
+          "dist/**",
+          "node_modules/three/**"
+        ]
       }
     }
   ],
   "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/api/index.js" }
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.js"
+    }
   ]
 }
