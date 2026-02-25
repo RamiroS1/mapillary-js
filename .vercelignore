@@ -1,6 +1,9 @@
 # Imágenes (muy pesadas). Usa DATA_BASE_URL si las hosteas fuera.
 data/
 
+# Evitar que Vercel use yarn (yarn.lock está corrupto); usar npm + package-lock.json
+yarn.lock
+
 # No necesarios para construir ni para el runtime
 doc/
 examples/debug
