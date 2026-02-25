@@ -14,19 +14,19 @@ jobs:
           node-version: "16.x"
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-scripts
+        run: npm ci --ignore-scripts
 
       - name: Setup
-        run: yarn setup
+        run: npm run setup
 
       - name: Lint
-        run: yarn lint
+        run: npm run lint
 
       - name: Build
-        run: yarn build
+        run: npm run build
 
       - name: Test
-        run: yarn test
+        run: npm run test
   doc:
     runs-on: ubuntu-latest
     steps:
@@ -38,23 +38,22 @@ jobs:
           node-version: "16.x"
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --ignore-scripts
+        run: npm ci --ignore-scripts
 
       - name: Setup
-        run: yarn setup
+        run: npm run setup
+
+      - name: Build MJS for doc
+        run: npm run build && (cd doc && ./mapillary-js.sh)
 
       - name: Install doc dependencies
-        run: |
-          yarn --cwd doc install && \
-          yarn --cwd doc install-mjs
+        run: npm install --prefix doc
 
       - name: Lint
-        run: yarn --cwd doc ci
+        run: npm run lint --prefix doc
 
       - name: Build API reference
-        run: |
-          yarn --cwd doc build-api && \
-          yarn --cwd doc clear-api
+        run: npm run build-api --prefix doc
 
       - name: Build doc website
-        run: yarn --cwd doc build
+        run: npm run build --prefix doc
