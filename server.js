@@ -24,6 +24,7 @@ const serveDist = (req, res, next) => {
   const bases = process.env.VERCEL
     ? [
         path.join(process.cwd(), "dist"),
+        path.join(process.cwd(), "public", "dist"),
         path.join(__dirname, "dist"),
         path.join(__dirname, "..", "dist"),
       ]
@@ -101,6 +102,33 @@ const importer = (basepath) => {
 
 const app = express();
 app.use(logger);
+
+if (process.env.VERCEL) {
+  app.get("/api/debug-paths", (req, res) => {
+    const bases = [
+      path.join(process.cwd(), "dist"),
+      path.join(process.cwd(), "public", "dist"),
+      path.join(__dirname, "dist"),
+      path.join(__dirname, "..", "dist"),
+    ];
+    const info = {
+      cwd: process.cwd(),
+      dirname: __dirname,
+      bases: bases.map((b) => ({
+        path: b,
+        exists: fs.existsSync(b),
+        isDir: (() => {
+          try {
+            return fs.existsSync(b) && fs.statSync(b).isDirectory();
+          } catch {
+            return false;
+          }
+        })(),
+      })),
+    };
+    res.json(info);
+  });
+}
 
 if (process.env.DATA_BASE_URL) {
   app.use("/data", (req, res, next) => {

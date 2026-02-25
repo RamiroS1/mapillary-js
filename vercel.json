@@ -10,6 +10,7 @@
         "includeFiles": [
           "examples/custom-data/**",
           "dist/**",
+          "public/**",
           "node_modules/three/**"
         ]
       }
