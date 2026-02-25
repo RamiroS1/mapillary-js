@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Street View — Asozulia 360</title>
+  <link rel="stylesheet" href="/dist/mapillary.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; }
+    #toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+    }
+    #day-list { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .day-btn {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .day-btn:hover { background: #444; }
+    #status { font-size: 0.85rem; color: #aaa; }
+    #main {
+      position: fixed;
+      top: 48px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+    }
+    #viewer { flex: 1; min-width: 0; }
+    #map-panel {
+      width: 360px;
+      min-width: 280px;
+      border-left: 1px solid #333;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+    }
+    #map-panel h3 {
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      color: #eee;
+      border-bottom: 1px solid #333;
+    }
+    #map {
+      flex: 1;
+      min-height: 200px;
+    }
+    .local-drop {
+      position: fixed;
+      top: 48px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: rgba(0,0,0,0.85);
+      color: #eee;
+      padding: 1rem;
+    }
+    .local-drop.hidden { display: none; }
+    .local-drop.dragover { background: rgba(30,60,90,0.9); outline: 3px dashed #3498db; }
+    .local-drop p { margin: 0; font-size: 1rem; }
+    .local-btn {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #3498db;
+      border-radius: 8px;
+      background: #2c3e50;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .local-btn:hover { background: #34495e; }
+    .local-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #999;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .local-close:hover { color: #fff; }
+    @media (max-width: 768px) {
+      #main { flex-direction: column; }
+      #map-panel { width: 100%; height: 40vh; border-left: none; border-top: 1px solid #333; }
+    }
+  </style>
+</head>
+<body>
+  <div id="local-drop-zone" class="local-drop hidden">
+    <button type="button" id="local-close-zone" class="local-close" aria-label="Cerrar" onclick="var z=document.getElementById('local-drop-zone');if(z)z.classList.add('hidden');">×</button>
+    <p>Arrastra aquí una carpeta o archivos de imagen (JPG, PNG, WebP)</p>
+    <p>o</p>
+    <input type="file" id="local-file-input" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display:none;" />
+    <label for="local-file-input" class="local-btn" style="cursor:pointer;display:inline-block;">Seleccionar archivos</label>
+    <input type="file" id="local-folder-input" webkitdirectory multiple accept=".jpg,.jpeg,.png,.webp" style="display:none;" />
+    <label for="local-folder-input" class="local-btn" style="cursor:pointer;display:inline-block;">Elegir carpeta</label>
+  </div>
+  <div id="toolbar">
+    <span>Día de adquisición:</span>
+    <div id="day-list"></div>
+    <button type="button" id="toolbar-load-local" class="local-btn" style="margin-left:auto;font-size:0.85rem;padding:0.35rem 0.6rem;" onclick="var z=document.getElementById('local-drop-zone');if(z)z.classList.remove('hidden');">Cargar desde mi PC</button>
+    <span id="status"></span>
+  </div>
+  <div id="main">
+    <div id="viewer"></div>
+    <div id="map-panel">
+      <h3>Ruta / Trayectoria</h3>
+      <div id="map"></div>
+    </div>
+  </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    (function() {
+      function onFilesChosen(input) {
+        var fl = input && input.files;
+        if (!fl || !fl.length) return;
+        var statusEl = document.getElementById('status');
+        if (window.__streetViewProcessFiles) {
+          statusEl.textContent = 'Procesando…';
+          window.__streetViewProcessFiles(fl).then(function() {
+            if (statusEl) statusEl.textContent = '';
+          }).catch(function(e) {
+            statusEl.textContent = 'Error: ' + (e && e.message ? e.message : String(e));
+          });
+        } else {
+          statusEl.textContent = 'Cargando visor… Espera unos segundos y vuelve a elegir la carpeta o archivos.';
+        }
+        input.value = '';
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        var fi = document.getElementById('local-file-input');
+        var fo = document.getElementById('local-folder-input');
+        if (fi) fi.addEventListener('change', function() { onFilesChosen(fi); });
+        if (fo) fo.addEventListener('change', function() { onFilesChosen(fo); });
+      });
+    })();
+  </script>
+  <script type="module" src="street-app.js"></script>
+</body>
+</html>
