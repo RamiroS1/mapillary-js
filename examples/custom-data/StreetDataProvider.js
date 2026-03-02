@@ -7,7 +7,7 @@
 import {
   DataProviderBase,
   S2GeometryProvider,
-} from "/dist/mapillary.module.js";
+} from "./mapillary-loader.js";
 
 const MANIFEST_URL = "/custom-data/street-manifest.json";
 const DEFAULT_REFERENCE = { lng: -73.1, lat: 7.0, alt: 0 };

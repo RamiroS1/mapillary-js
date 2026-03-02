@@ -5,30 +5,12 @@
 import {
   createStreetDataProviderFromManifest,
 } from "./StreetDataProvider.js";
+import { Viewer } from "./mapillary-loader.js";
 
 const MANIFEST_URL = "/custom-data/street-manifest.json";
 const DEFAULT_REFERENCE = { lng: -73.1, lat: 7.0 };
 const LNG_STEP = 0.00008;
 const IMAGE_EXTS = /\.(jpg|jpeg|png|webp)$/i;
-let ViewerCtorPromise = null;
-
-async function getViewerCtor() {
-  if (ViewerCtorPromise) return ViewerCtorPromise;
-  ViewerCtorPromise = (async () => {
-    const candidates = [
-      "/dist/mapillary.module.js",
-      "https://unpkg.com/mapillary-js@5.0.0-beta.5/dist/mapillary.module.js",
-    ];
-    for (const url of candidates) {
-      try {
-        const mod = await import(/* @vite-ignore */ url);
-        if (mod && mod.Viewer) return mod.Viewer;
-      } catch (_) {}
-    }
-    throw new Error("No se pudo cargar mapillary.module.js (local ni CDN).");
-  })();
-  return ViewerCtorPromise;
-}
 
 /** Build trajectory per day: use real GPS from manifest when present, else synthetic. */
 function buildTrajectoriesFromManifest(manifest) {
@@ -268,7 +250,7 @@ function runWithManifest(manifest, blobUrlMap, statusEl, dayListEl) {
     ? Promise.resolve(createStreetDataProviderFromManifest(manifest, { blobUrlMap }))
     : Promise.resolve(createStreetDataProviderFromManifest(manifest));
 
-  Promise.all([providerPromise, getViewerCtor()]).then(([dataProvider, Viewer]) => {
+  providerPromise.then((dataProvider) => {
     if (blobUrlMap) currentBlobUrls = Array.from(blobUrlMap.values());
 
   const firstImageIds = manifest.days.map((d) => d.images[0]?.id).filter(Boolean);
